@@ -6,7 +6,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 const SUPABASE_URL = "https://ctnbaykaqbsauwcbvxdx.supabase.co"; // already set from your project ID
-const SUPABASE_ANON_KEY = "YOUR_ANON_KEY_HERE"; // 🔑 paste your eyJ... key here locally
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN0bmJheWthcWJzYXV3Y2J2eGR4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3NTkxODEsImV4cCI6MjA5MTMzNTE4MX0._uqdOC2EAwW0YQdzdT8m6dXuAF49Rn2oZxFtsxrOBjk"; // 🔑 paste your eyJ... key here locally
 
 // ─────────────────────────────────────────────────────────────────────────────
 
