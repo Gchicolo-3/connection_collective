@@ -1,32 +1,22 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// CONNECTION COLLECTIVE — Supabase Connected
-// ─────────────────────────────────────────────────────────────────────────────
-// Before deploying to Vercel, fill in the two lines below.
-// Get these from: Supabase Dashboard → Your Project → Settings → API
-// ─────────────────────────────────────────────────────────────────────────────
-
-const SUPABASE_URL = "https://ctnbaykaqbsauwcbvxdx.supabase.co"; // already set from your project ID
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN0bmJheWthcWJzYXV3Y2J2eGR4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3NTkxODEsImV4cCI6MjA5MTMzNTE4MX0._uqdOC2EAwW0YQdzdT8m6dXuAF49Rn2oZxFtsxrOBjk"; // 🔑 paste your eyJ... key here locally
-
-// ─────────────────────────────────────────────────────────────────────────────
+const SUPABASE_URL = "https://ctnbaykaqbsauwcbvxdx.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN0bmJheWthcWJzYXV3Y2J2eGR4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3NTkxODEsImV4cCI6MjA5MTMzNTE4MX0._uqdOC2EAwW0YQdzdT8m6dXuAF49Rn2oZxFtsxrOBjk";
 
 import { useState, useEffect, useCallback } from "react";
 
-// ── Supabase client (no package needed — raw fetch) ───────────────────────────
 const sb = {
   from: (table) => ({
     _table: table,
     _filters: [],
     _order: null,
-    eq(col, val) { this._filters.push(`${col}=eq.${val}`); return this; },
+    eq(col, val) { this._filters.push([col, `eq.${val}`]); return this; },
     order(col, { ascending = true } = {}) { this._order = `${col}.${ascending ? "asc" : "desc"}`; return this; },
     async select(cols = "*") {
       const params = new URLSearchParams();
       if (cols !== "*") params.set("select", cols);
-      this._filters.forEach(f => { const [k, v] = f.split("="); params.append(k, v.replace(/^eq\./, "")); });
+      this._filters.forEach(([k, v]) => params.append(k, v));
       if (this._order) params.set("order", this._order);
       const res = await fetch(`${SUPABASE_URL}/rest/v1/${this._table}?${params}`, {
-        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json" }
+        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` }
       });
       const data = await res.json();
       return { data: Array.isArray(data) ? data : [], error: res.ok ? null : data };
@@ -42,7 +32,7 @@ const sb = {
     },
     async update(vals) {
       const params = new URLSearchParams();
-      this._filters.forEach(f => { const [k, v] = f.split("="); params.append(k, v.replace(/^eq\./, "")); });
+      this._filters.forEach(([k, v]) => params.append(k, v));
       const res = await fetch(`${SUPABASE_URL}/rest/v1/${this._table}?${params}`, {
         method: "PATCH",
         headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json", Prefer: "return=representation" },
@@ -53,7 +43,7 @@ const sb = {
     },
     async delete() {
       const params = new URLSearchParams();
-      this._filters.forEach(f => { const [k, v] = f.split("="); params.append(k, v.replace(/^eq\./, "")); });
+      this._filters.forEach(([k, v]) => params.append(k, v));
       const res = await fetch(`${SUPABASE_URL}/rest/v1/${this._table}?${params}`, {
         method: "DELETE",
         headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` }
@@ -63,7 +53,6 @@ const sb = {
   })
 };
 
-// ── Styles ────────────────────────────────────────────────────────────────────
 const fontLink = document.createElement("link");
 fontLink.rel = "stylesheet";
 fontLink.href = "https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap";
@@ -145,7 +134,6 @@ const styleEl = document.createElement("style");
 styleEl.textContent = css;
 document.head.appendChild(styleEl);
 
-// ── Static member data (auth/profiles would replace this in a full build) ─────
 const MEMBERS = [
   { id: "m1", name: "You", short: "Focus Studio", role: "Workplace Design & Furniture", av: "YO", c: "c1", groups: ["NAIOP", "CoreNet Global", "BNI Downtown", "ULI Young Leaders"], contacts: ["Hines Real Estate", "CBRE Project Mgmt", "WeWork Facilities", "Ware Malcomb"] },
   { id: "m2", name: "Jake Torres", short: "Torres Construction", role: "General Contractor", av: "JT", c: "c2", groups: ["AGC", "NAIOP", "Rotary Club", "ABC SoCal"], contacts: ["Brookfield Properties", "Lincoln Property", "Transwestern", "Greystar"] },
@@ -162,10 +150,9 @@ function Av({ id, sz = "av-lg" }) {
   return <span className={`av ${sz} ${m.c}`}>{m.av}</span>;
 }
 
-function Loading() { return <div className="loading-state"><span className="spinner" /><span>Loading…</span></div>; }
-function ErrBanner({ msg }) { return msg ? <div className="error-banner">⚠ {msg}</div> : null; }
+function Loading() { return <div className="loading-state"><span className="spinner" /><span>Loading...</span></div>; }
+function ErrBanner({ msg }) { return msg ? <div className="error-banner">{msg}</div> : null; }
 
-// ── FEED ──────────────────────────────────────────────────────────────────────
 function FeedTab({ me }) {
   const [posts, setPosts] = useState([]);
   const [draft, setDraft] = useState("");
@@ -192,9 +179,9 @@ function FeedTab({ me }) {
     <div>
       <div className="card card-hi" style={{ marginBottom: 14 }}>
         <p className="lbl">Post an Update</p>
-        <textarea className="input" placeholder="Share intel, a win, a resource, a heads up…" value={draft} onChange={e => setDraft(e.target.value)} rows={3} />
+        <textarea className="input" placeholder="Share intel, a win, a resource, a heads up..." value={draft} onChange={e => setDraft(e.target.value)} rows={3} />
         <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 9 }}>
-          <button className="btn btn-gold" onClick={post} disabled={saving}>{saving ? <span className="spinner" /> : "Post ↑"}</button>
+          <button className="btn btn-gold" onClick={post} disabled={saving}>{saving ? <span className="spinner" /> : "Post"}</button>
         </div>
       </div>
       <ErrBanner msg={err} />
@@ -219,7 +206,6 @@ function FeedTab({ me }) {
   );
 }
 
-// ── MEETINGS ──────────────────────────────────────────────────────────────────
 function MeetingTab({ me }) {
   const [options, setOptions] = useState([]);
   const [votes, setVotes] = useState([]);
@@ -283,7 +269,7 @@ function MeetingTab({ me }) {
                 </div>
                 <div className="rowc">
                   <span className="meta">{optVotes.length} vote{optVotes.length !== 1 ? "s" : ""}</span>
-                  <button className={`btn ${mine ? "btn-gold" : "btn-ghost"}`} style={{ padding: "4px 12px" }} onClick={() => toggle(opt.id)}>{mine ? "✓ In" : "Vote"}</button>
+                  <button className={`btn ${mine ? "btn-gold" : "btn-ghost"}`} style={{ padding: "4px 12px" }} onClick={() => toggle(opt.id)}>{mine ? "Voted" : "Vote"}</button>
                 </div>
               </div>
               <div className="vw"><div className="vb" style={{ width: `${pct}%` }} /></div>
@@ -298,12 +284,11 @@ function MeetingTab({ me }) {
   );
 }
 
-// ── MEMBERS ───────────────────────────────────────────────────────────────────
 function MembersTab({ me, onAskIntro }) {
   const [sel, setSel] = useState(null);
   if (sel) return (
     <div>
-      <button className="btn btn-ghost" style={{ marginBottom: 16 }} onClick={() => setSel(null)}>← Back</button>
+      <button className="btn btn-ghost" style={{ marginBottom: 16 }} onClick={() => setSel(null)}>Back</button>
       <div className="card">
         <div className="rowc" style={{ marginBottom: 14 }}>
           <Av id={sel.id} />
@@ -341,7 +326,7 @@ function MembersTab({ me, onAskIntro }) {
               {m.groups.slice(0, 2).map(g => <span key={g} className="tag tb" style={{ fontSize: 10 }}>{g}</span>)}
               {m.groups.length > 2 && <span className="tag tg" style={{ fontSize: 10 }}>+{m.groups.length - 2}</span>}
             </div>
-            <div style={{ fontSize: 11.5, color: "var(--mut)" }}>{m.contacts.length} outside contacts · <span style={{ color: "var(--gold)" }}>View →</span></div>
+            <div style={{ fontSize: 11.5, color: "var(--mut)" }}>{m.contacts.length} outside contacts</div>
           </div>
         ))}
       </div>
@@ -349,7 +334,6 @@ function MembersTab({ me, onAskIntro }) {
   );
 }
 
-// ── INTROS ────────────────────────────────────────────────────────────────────
 function IntrosTab({ me, onCountChange }) {
   const [intros, setIntros] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -380,7 +364,7 @@ function IntrosTab({ me, onCountChange }) {
       <div className={`card ${isTid && req.status === "Pending" ? "card-hi" : ""}`}>
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 9 }}>
           <div style={{ fontSize: 13 }}>
-            <strong>{isRid ? "You" : requester.name}</strong><span className="meta"> → asking </span><strong>{isTid ? "You" : via.name}</strong><span className="meta"> for an outside intro</span>
+            <strong>{isRid ? "You" : requester.name}</strong><span className="meta"> asking </span><strong>{isTid ? "You" : via.name}</strong><span className="meta"> for an outside intro</span>
           </div>
           <span className={`tag ${SC[req.status] || "tg"}`}>{req.status}</span>
         </div>
@@ -391,7 +375,7 @@ function IntrosTab({ me, onCountChange }) {
         <div className="meta">{fmtTime(req.created_at)}</div>
         {isTid && req.status === "Pending" && (
           <div style={{ display: "flex", gap: 7, marginTop: 10 }}>
-            <button className="btn btn-gr" onClick={() => update(req.id, "Connected")}>✓ Make the Intro</button>
+            <button className="btn btn-gr" onClick={() => update(req.id, "Connected")}>Make the Intro</button>
             <button className="btn btn-ghost" onClick={() => update(req.id, "Declined")}>Decline</button>
           </div>
         )}
@@ -402,7 +386,7 @@ function IntrosTab({ me, onCountChange }) {
   return (
     <div>
       <div className="info-box" style={{ marginBottom: 18 }}>
-        <strong style={{ color: "var(--txt)" }}>How this works:</strong> Browse a member's profile → click "Request Intro" on any of their outside contacts → they get notified and can make the introduction. Everything is tracked here so nothing falls through the cracks.
+        <strong style={{ color: "var(--txt)" }}>How this works:</strong> Browse a member's profile, click "Request Intro" on any of their outside contacts, they get notified and can make the introduction. Everything is tracked here so nothing falls through the cracks.
       </div>
       <ErrBanner msg={err} />
       {loading ? <Loading /> : <>
@@ -415,7 +399,6 @@ function IntrosTab({ me, onCountChange }) {
   );
 }
 
-// ── CONNECT BOARD ─────────────────────────────────────────────────────────────
 function ConnectTab({ me }) {
   const [items, setItems] = useState([]);
   const [helpers, setHelpers] = useState([]);
@@ -455,4 +438,377 @@ function ConnectTab({ me }) {
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
-        <p style={{ fontSize: 13, color: "var(--mut)", maxWidth: 460, lineHeight: 1.65 }}>Post
+        <p style={{ fontSize: 13, color: "var(--mut)", maxWidth: 460, lineHeight: 1.65 }}>Post who you're trying to reach outside the group. Other members can raise their hand if they have a connection.</p>
+        <button className="btn btn-gold" onClick={() => setComposing(true)}>+ Post Target</button>
+      </div>
+      <ErrBanner msg={err} />
+      {composing && (
+        <div className="card card-hi" style={{ marginBottom: 14 }}>
+          <p className="lbl">Who are you trying to reach?</p>
+          <input className="input" placeholder="Person or company name" value={draft.target} onChange={e => setDraft(d => ({ ...d, target: e.target.value }))} style={{ marginBottom: 8 }} />
+          <input className="input" placeholder="Industry" value={draft.industry} onChange={e => setDraft(d => ({ ...d, industry: e.target.value }))} style={{ marginBottom: 8 }} />
+          <textarea className="input" placeholder="Context — why you want to connect" value={draft.note} onChange={e => setDraft(d => ({ ...d, note: e.target.value }))} rows={2} />
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 7, marginTop: 9 }}>
+            <button className="btn btn-ghost" onClick={() => setComposing(false)}>Cancel</button>
+            <button className="btn btn-gold" onClick={post} disabled={saving}>{saving ? <span className="spinner" /> : "Post"}</button>
+          </div>
+        </div>
+      )}
+      {loading ? <Loading /> : items.map(item => {
+        const m = gm(item.author_id);
+        const isMe = item.author_id === me.id;
+        const itemHelpers = helpers.filter(h => h.target_id === item.id);
+        const alreadyHelping = itemHelpers.some(h => h.member_id === me.id);
+        return (
+          <div className="card" key={item.id}>
+            <div className="rowc" style={{ marginBottom: 10 }}>
+              <Av id={item.author_id} sz="av-sm" />
+              <div style={{ flex: 1 }}>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>{isMe ? "You" : m.name}</span>
+                {isMe && <span className="ypill">you</span>}
+                <span className="meta" style={{ marginLeft: 6 }}>{fmtTime(item.created_at)}</span>
+              </div>
+            </div>
+            <div style={{ background: "var(--sur2)", borderRadius: 8, padding: "10px 13px", marginBottom: 10 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 3 }}>{item.target}</div>
+              {item.industry && <span className="tag tb" style={{ fontSize: 10 }}>{item.industry}</span>}
+              {item.note && <p style={{ fontSize: 13, color: "var(--mut)", marginTop: 6, lineHeight: 1.6 }}>{item.note}</p>}
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                {itemHelpers.map(h => <Av key={h.id} id={h.member_id} sz="av-xs" />)}
+                {itemHelpers.length > 0 && <span className="meta" style={{ marginLeft: 4 }}>{itemHelpers.length} can help</span>}
+              </div>
+              {!isMe && !alreadyHelping && (
+                <button className="btn btn-gr" onClick={() => helpWith(item.id)}>I know this person — I can help</button>
+              )}
+              {alreadyHelping && <span className="tag tgr" style={{ fontSize: 10 }}>You offered to help</span>}
+            </div>
+          </div>
+        );
+      })}
+      {!loading && items.length === 0 && <div style={{ textAlign: "center", padding: 40, color: "var(--mut)", fontSize: 13 }}>No connect targets yet. Be the first to post who you're looking to reach.</div>}
+    </div>
+  );
+}
+
+function ProjectsTab({ me }) {
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [composing, setComposing] = useState(false);
+  const [draft, setDraft] = useState({ company: "", type: "", sqft: "", status: "Pre-Design", location: "", note: "", needs: "" });
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState("");
+
+  useEffect(() => {
+    sb.from("projects").order("created_at", { ascending: false }).select()
+      .then(({ data, error }) => { if (!error) setProjects(data); else setErr("Couldn't load projects."); setLoading(false); });
+  }, []);
+
+  const post = async () => {
+    if (!draft.company.trim()) return;
+    setSaving(true);
+    const needsArr = draft.needs.split(",").map(s => s.trim()).filter(Boolean);
+    const { data, error } = await sb.from("projects").insert({
+      author_id: me.id, company: draft.company, type: draft.type, sqft: draft.sqft,
+      status: draft.status, location: draft.location, note: draft.note, needs: needsArr
+    });
+    if (!error && data[0]) { setProjects(p => [data[0], ...p]); setDraft({ company: "", type: "", sqft: "", status: "Pre-Design", location: "", note: "", needs: "" }); setComposing(false); }
+    else setErr("Couldn't save project.");
+    setSaving(false);
+  };
+
+  const SC = { "Pre-Design": "tb", Bidding: "tg", "In Construction": "tgr", Completed: "tr" };
+
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+        <p style={{ fontSize: 13, color: "var(--mut)", lineHeight: 1.65 }}>Active projects from members. Flag needs so the group can help.</p>
+        <button className="btn btn-gold" onClick={() => setComposing(true)}>+ Add Project</button>
+      </div>
+      <ErrBanner msg={err} />
+      {composing && (
+        <div className="card card-hi" style={{ marginBottom: 14 }}>
+          <p className="lbl">New Project</p>
+          <div className="grid2" style={{ marginBottom: 8 }}>
+            <input className="input" placeholder="Company / Client" value={draft.company} onChange={e => setDraft(d => ({ ...d, company: e.target.value }))} />
+            <input className="input" placeholder="Project type" value={draft.type} onChange={e => setDraft(d => ({ ...d, type: e.target.value }))} />
+          </div>
+          <div className="grid2" style={{ marginBottom: 8 }}>
+            <input className="input" placeholder="Square footage" value={draft.sqft} onChange={e => setDraft(d => ({ ...d, sqft: e.target.value }))} />
+            <select className="input" value={draft.status} onChange={e => setDraft(d => ({ ...d, status: e.target.value }))}>
+              <option>Pre-Design</option><option>Bidding</option><option>In Construction</option><option>Completed</option>
+            </select>
+          </div>
+          <input className="input" placeholder="Location" value={draft.location} onChange={e => setDraft(d => ({ ...d, location: e.target.value }))} style={{ marginBottom: 8 }} />
+          <textarea className="input" placeholder="Notes" value={draft.note} onChange={e => setDraft(d => ({ ...d, note: e.target.value }))} rows={2} style={{ marginBottom: 8 }} />
+          <input className="input" placeholder="Needs (comma-separated, e.g. Electrician, Insurance)" value={draft.needs} onChange={e => setDraft(d => ({ ...d, needs: e.target.value }))} />
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 7, marginTop: 9 }}>
+            <button className="btn btn-ghost" onClick={() => setComposing(false)}>Cancel</button>
+            <button className="btn btn-gold" onClick={post} disabled={saving}>{saving ? <span className="spinner" /> : "Add Project"}</button>
+          </div>
+        </div>
+      )}
+      {loading ? <Loading /> : projects.map(p => {
+        const m = gm(p.author_id); const isMe = p.author_id === me.id;
+        const needs = Array.isArray(p.needs) ? p.needs : [];
+        return (
+          <div className="card" key={p.id}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
+              <div className="rowc">
+                <Av id={p.author_id} sz="av-sm" />
+                <div>
+                  <span style={{ fontSize: 14, fontWeight: 700, fontFamily: "'Syne',sans-serif" }}>{p.company}</span>
+                  {isMe && <span className="ypill">you</span>}
+                  <div className="meta">{isMe ? "You" : m.name} · {m.role}</div>
+                </div>
+              </div>
+              <span className={`tag ${SC[p.status] || "tg"}`}>{p.status}</span>
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 8, fontSize: 13 }}>
+              {p.type && <span><strong>Type:</strong> {p.type}</span>}
+              {p.sqft && <span><strong>SF:</strong> {p.sqft}</span>}
+              {p.location && <span><strong>Location:</strong> {p.location}</span>}
+            </div>
+            {p.note && <p style={{ fontSize: 13, color: "var(--mut)", lineHeight: 1.6, marginBottom: 8 }}>{p.note}</p>}
+            {needs.length > 0 && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: "var(--red)" }}>Need:</span>
+                {needs.map(n => <span key={n} className="tag tr" style={{ fontSize: 10 }}>{n}</span>)}
+              </div>
+            )}
+            <div className="meta" style={{ marginTop: 8 }}>{fmtTime(p.created_at)}</div>
+          </div>
+        );
+      })}
+      {!loading && projects.length === 0 && <div style={{ textAlign: "center", padding: 40, color: "var(--mut)", fontSize: 13 }}>No projects yet.</div>}
+    </div>
+  );
+}
+
+function FilesTab({ me }) {
+  const [files, setFiles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [composing, setComposing] = useState(false);
+  const [draft, setDraft] = useState({ name: "", size: "", file_type: "pdf" });
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState("");
+
+  useEffect(() => {
+    sb.from("files").order("created_at", { ascending: false }).select()
+      .then(({ data, error }) => { if (!error) setFiles(data); else setErr("Couldn't load files."); setLoading(false); });
+  }, []);
+
+  const post = async () => {
+    if (!draft.name.trim()) return;
+    setSaving(true);
+    const { data, error } = await sb.from("files").insert({ uploaded_by: me.id, name: draft.name, size: draft.size, file_type: draft.file_type });
+    if (!error && data[0]) { setFiles(p => [data[0], ...p]); setDraft({ name: "", size: "", file_type: "pdf" }); setComposing(false); }
+    else setErr("Couldn't save file.");
+    setSaving(false);
+  };
+
+  const icons = { pdf: "PDF", xls: "XLS", doc: "DOC", xlsx: "XLS", docx: "DOC", ppt: "PPT", img: "IMG", link: "URL" };
+  const iconColors = { pdf: "#e05c5c", xls: "#4caf7a", doc: "#5b8dee", xlsx: "#4caf7a", docx: "#5b8dee", ppt: "#e07a5c", img: "#9c6ee0", link: "#c8a96e" };
+
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+        <p style={{ fontSize: 13, color: "var(--mut)", lineHeight: 1.65 }}>Shared files and links for the group.</p>
+        <button className="btn btn-gold" onClick={() => setComposing(true)}>+ Add File</button>
+      </div>
+      <ErrBanner msg={err} />
+      {composing && (
+        <div className="card card-hi" style={{ marginBottom: 14 }}>
+          <p className="lbl">Add a File or Link</p>
+          <input className="input" placeholder="File name or link title" value={draft.name} onChange={e => setDraft(d => ({ ...d, name: e.target.value }))} style={{ marginBottom: 8 }} />
+          <div className="grid2" style={{ marginBottom: 8 }}>
+            <input className="input" placeholder="Size (e.g. 2.4 MB)" value={draft.size} onChange={e => setDraft(d => ({ ...d, size: e.target.value }))} />
+            <select className="input" value={draft.file_type} onChange={e => setDraft(d => ({ ...d, file_type: e.target.value }))}>
+              <option value="pdf">PDF</option><option value="xls">Excel</option><option value="doc">Word</option><option value="ppt">PowerPoint</option><option value="img">Image</option><option value="link">Link</option>
+            </select>
+          </div>
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 7, marginTop: 4 }}>
+            <button className="btn btn-ghost" onClick={() => setComposing(false)}>Cancel</button>
+            <button className="btn btn-gold" onClick={post} disabled={saving}>{saving ? <span className="spinner" /> : "Add"}</button>
+          </div>
+        </div>
+      )}
+      {loading ? <Loading /> : files.map(f => {
+        const m = gm(f.uploaded_by); const isMe = f.uploaded_by === me.id;
+        const ft = f.file_type || "pdf";
+        return (
+          <div className="card card-sm" key={f.id} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 8, background: "var(--sur2)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 10, color: iconColors[ft] || "var(--mut)", flexShrink: 0 }}>
+              {icons[ft] || ft.toUpperCase()}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13.5, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.name}</div>
+              <div className="meta">{isMe ? "You" : m.name} · {f.size || ""} · {fmtTime(f.created_at)}</div>
+            </div>
+          </div>
+        );
+      })}
+      {!loading && files.length === 0 && <div style={{ textAlign: "center", padding: 40, color: "var(--mut)", fontSize: 13 }}>No files shared yet.</div>}
+    </div>
+  );
+}
+
+function NotificationsTab({ me, onNav, onCountChange }) {
+  const [notifs, setNotifs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState("");
+
+  useEffect(() => {
+    sb.from("notifications").eq("member_id", me.id).order("created_at", { ascending: false }).select()
+      .then(({ data, error }) => {
+        if (!error) { setNotifs(data); onCountChange(data.filter(n => !n.is_read).length); }
+        else setErr("Couldn't load notifications.");
+        setLoading(false);
+      });
+  }, [me.id]);
+
+  const markRead = async (n) => {
+    if (!n.is_read) {
+      await sb.from("notifications").eq("id", n.id).update({ is_read: true });
+      setNotifs(p => p.map(x => x.id === n.id ? { ...x, is_read: true } : x));
+      onCountChange(notifs.filter(x => !x.is_read && x.id !== n.id).length);
+    }
+    if (n.action_tab) onNav(n.action_tab);
+  };
+
+  return (
+    <div>
+      <div className="info-box" style={{ marginBottom: 18 }}>
+        In a full deployment, notifications would also be sent via email and text message to ensure nothing is missed.
+      </div>
+      <ErrBanner msg={err} />
+      {loading ? <Loading /> : notifs.length === 0 ? (
+        <div style={{ textAlign: "center", padding: 40, color: "var(--mut)", fontSize: 13 }}>No notifications yet.</div>
+      ) : (
+        <div className="card">
+          {notifs.map(n => (
+            <div className="ni" key={n.id} onClick={() => markRead(n)}>
+              <div className={`nd ${n.is_read ? "read" : ""}`} />
+              <div style={{ flex: 1 }}>
+                <p style={{ fontSize: 13, lineHeight: 1.6, fontWeight: n.is_read ? 400 : 600 }}>{n.text}</p>
+                <div className="meta">{fmtTime(n.created_at)}{n.action_tab && <span style={{ color: "var(--gold)", marginLeft: 6 }}>Go to {n.action_tab}</span>}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function IntroModal({ me, member, contact, onClose, onDone }) {
+  const [reason, setReason] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState("");
+
+  const submit = async () => {
+    if (!reason.trim()) return;
+    setSaving(true);
+    const { error } = await sb.from("intro_requests").insert({
+      requester_id: me.id, via_member_id: member.id, outside_contact: contact, reason, status: "Pending"
+    });
+    if (!error) { onDone(); onClose(); }
+    else { setErr("Couldn't submit request."); setSaving(false); }
+  };
+
+  return (
+    <div className="modal-bg" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <h3>Request Introduction</h3>
+        <p className="meta" style={{ marginBottom: 16 }}>Ask {member.name} to introduce you to <strong style={{ color: "var(--txt)" }}>{contact}</strong></p>
+        <ErrBanner msg={err} />
+        <p className="lbl">Why do you want this intro?</p>
+        <textarea className="input" placeholder="Give context so they can make a warm intro..." value={reason} onChange={e => setReason(e.target.value)} rows={4} />
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 7, marginTop: 14 }}>
+          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="btn btn-gold" onClick={submit} disabled={saving || !reason.trim()}>{saving ? <span className="spinner" /> : "Send Request"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const TABS = [
+  { key: "feed", label: "Feed", icon: "📢" },
+  { key: "meetings", label: "Meetings", icon: "📅" },
+  { key: "members", label: "Members", icon: "👥" },
+  { key: "intros", label: "Introductions", icon: "🤝" },
+  { key: "connect", label: "Connect Board", icon: "🎯" },
+  { key: "projects", label: "Projects", icon: "🏗" },
+  { key: "files", label: "Files", icon: "📁" },
+  { key: "notifs", label: "Notifications", icon: "🔔" },
+];
+
+const TAB_DESC = {
+  feed: { title: "Feed", sub: "Share updates, wins, and intel with the group" },
+  meetings: { title: "Meetings", sub: "Vote on upcoming meeting dates" },
+  members: { title: "Members", sub: "Browse the group and request introductions" },
+  intros: { title: "Introductions", sub: "Track intro requests to outside contacts" },
+  connect: { title: "Connect Board", sub: "Post who you're trying to reach" },
+  projects: { title: "Projects", sub: "Active project board for the group" },
+  files: { title: "Files", sub: "Shared documents and links" },
+  notifs: { title: "Notifications", sub: "Your activity feed" },
+};
+
+export default function App() {
+  const [tab, setTab] = useState("feed");
+  const [me, setMe] = useState(MEMBERS[0]);
+  const [introModal, setIntroModal] = useState(null);
+  const [introBadge, setIntroBadge] = useState(0);
+  const [notifBadge, setNotifBadge] = useState(0);
+
+  const badges = { intros: introBadge, notifs: notifBadge };
+
+  const handleAskIntro = (member, contact) => setIntroModal({ member, contact });
+
+  const desc = TAB_DESC[tab] || {};
+
+  return (
+    <div className="wrap">
+      <div className="sidebar">
+        <div className="logo">
+          <h1>Connection Collective</h1>
+          <p>Private Intro Network</p>
+        </div>
+        <div className="nav">
+          {TABS.map(t => (
+            <button key={t.key} className={`nb ${tab === t.key ? "active" : ""}`} onClick={() => setTab(t.key)}>
+              <span className="nb-ic">{t.icon}</span>
+              {t.label}
+              {badges[t.key] > 0 && <span className={`bdg ${t.key === "notifs" ? "bdg-r" : ""}`}>{badges[t.key]}</span>}
+            </button>
+          ))}
+        </div>
+        <div className="ustrip">
+          <p className="ulbl">Viewing As</p>
+          {MEMBERS.map(m => (
+            <button key={m.id} className={`mpill ${me.id === m.id ? "sel" : ""}`} onClick={() => { setMe(m); setTab("feed"); }}>
+              <span className={`av av-xs ${m.c}`}>{m.av}</span>
+              <div><div className="pname">{m.name}</div><div className="prole">{m.short}</div></div>
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="main">
+        <div className="pghd">
+          <div><h2>{desc.title}</h2><p>{desc.sub}</p></div>
+        </div>
+        {tab === "feed" && <FeedTab key={me.id} me={me} />}
+        {tab === "meetings" && <MeetingTab key={me.id} me={me} />}
+        {tab === "members" && <MembersTab key={me.id} me={me} onAskIntro={handleAskIntro} />}
+        {tab === "intros" && <IntrosTab key={me.id} me={me} onCountChange={setIntroBadge} />}
+        {tab === "connect" && <ConnectTab key={me.id} me={me} />}
+        {tab === "projects" && <ProjectsTab key={me.id} me={me} />}
+        {tab === "files" && <FilesTab key={me.id} me={me} />}
+        {tab === "notifs" && <NotificationsTab key={me.id} me={me} onNav={setTab} onCountChange={setNotifBadge} />}
+      </div>
+      {introModal && <IntroModal me={me} member={introModal.member} contact={introModal.contact} onClose={() => setIntroModal(null)} onDone={() => setTab("intros")} />}
+    </div>
+  );
+}
